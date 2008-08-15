@@ -1,0 +1,8 @@
+#summary Available userscripts
+
+= Available userscripts =
+
+== Shortcut Binder ==
+
+Download: http://webmonkey-userscripts.googlecode.com/svn/trunk/shortcut_binder/shortcut_binder.user.js
+Details: ShortcutBinder

@@ -7,41 +7,42 @@ Tool to bind certain shortcuts to clickable elements. You select an element (but
 
 = Details =
 
+-
 
 === Shortcut binder menu ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/menu.png
 
-
+-
 
 === Add bind dialog shortcut setup ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/dialog-shortcut.png
 
-
+-
 
 === Press the add dialog shortcut ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/1-3.png
 
-
+-
 
 === Add binding dialog appears. You select the button. ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/2.png
 
-
+-
 
 === You selected the element. XPath is automatically generated. You press the key combination (the shortcut). ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/3.png
 
-
+-
 
 === Save the settings. ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/4.png
 
-
+-
 
 === Try the new shortcut. ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/1-21.png
 
-
+-
 
 === Shortcut works. The page was opened. ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/5.png

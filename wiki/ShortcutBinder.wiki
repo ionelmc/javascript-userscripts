@@ -1,4 +1,5 @@
 #summary The Shortcut Binder greasemonkey userscript.
+#labels Featured
 
 = Introduction =
 

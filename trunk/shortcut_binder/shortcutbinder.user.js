@@ -54,8 +54,8 @@ Bindings.prototype.match = function(shortcutHash) {
         return e;
 }
 Bindings.prototype.save = function () {
-    serialize("bindings", uneval(this.bindings));
-    serialize("bindingCount", uneval(this.bindingCount));
+    serialize("bindings", this.bindings);
+    serialize("bindingCount", this.bindingCount);
 }
 Bindings.prototype.add = function (new_binding) {
     for (var id in this.bindings) {
@@ -71,20 +71,19 @@ Bindings.prototype.add = function (new_binding) {
             }
         }
     }
-    this.bindings[this.bindingCount++] = new_binding;
+    this.bindings[++this.bindingsCount] = new_binding;
     this.save();
     this.make_cache();
 }
 Bindings.prototype.log = function () {
+    GM_log("ID Count:"+this.bindingsCount+"("+typeof this.bindingsCount+")");
     for (var id in this.bindings) {
-        GM_log(id+": "+this.bindings[id]);
+        GM_log("Binding_"+id+": "+this.bindings[id]);
     }
 }
 
 var binding_store = new Bindings();
-//~ binding_store.log();
-//~ GM_log(binding_store.bindings);
-//~ GM_log(binding_store);
+binding_store.log();
 
 var binddialog_opened = false;
 
@@ -533,7 +532,7 @@ function keyHashEq(hash1, hash2) {
 }
 
 function deserialize(name, def) {
-  return eval(GM_getValue(name, (def || '({})')));
+  return eval(GM_getValue(name) || def || '({})');
 }
 
 function serialize(name, val) {

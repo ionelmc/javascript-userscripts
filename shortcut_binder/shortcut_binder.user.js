@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name            Shortcut Binder
 // @namespace       ShortcutBinder
-// @author          Maries Ionel Cristian
 // @description     Tool to bind certain shortcuts to clickable elements.
 // @include         *
 // @revision        $Revision$
 // @id              $Id$
-
+// @date            $Date$
+// @source          $URL$
+// @author          $Author$
 // ==/UserScript==
 
 GM_registerMenuCommand("Set shortcut for bind dialog", SetOptions, "k");

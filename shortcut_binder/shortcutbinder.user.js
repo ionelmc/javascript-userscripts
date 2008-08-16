@@ -14,11 +14,11 @@
 GM_registerMenuCommand("Set shortcut for bind dialog", SetOptions, "k");
 GM_registerMenuCommand("Add manual bind", BindDialog, "b");
 GM_registerMenuCommand("Manage bindings", ManageDialog, "m");
-
+    
 var KEYS = { altKey:'Alt', ctrlKey:'Ctrl', metaKey:'Meta', shiftKey:'Shift', charCode:'' };
 
 function Bindings() {
-    this.bindingsCount = deserialize("bindingsCount", "(0)");
+    this.bindingsCount = deserialize("bindingsCount", "(1)");
     this.bindings = deserialize("bindings", "({})");
     this.make_cache();
 }
@@ -26,7 +26,7 @@ Bindings.prototype.make_cache = function () {
     this.cache = {};
     for (var id in this.bindings) {
         var bindObj = this.bindings[id];
-        var bindHash = bindObj;
+        var bindHash = bindObj.bind;
         var includeex = convert2RegExp(bindObj.include);
         var excludeex = convert2RegExp(bindObj.exclude);
         if (includeex.test(window.location.href) && !excludeex.test(window.location.href)) {
@@ -55,9 +55,10 @@ Bindings.prototype.match = function(shortcutHash) {
 }
 Bindings.prototype.save = function () {
     serialize("bindings", this.bindings);
-    serialize("bindingCount", this.bindingCount);
+    serialize("bindingsCount", this.bindingsCount);
 }
 Bindings.prototype.add = function (new_binding) {
+    var confirmed = false;
     for (var id in this.bindings) {
         var bindObj = this.bindings[id];
         // check for bindings with the same key/include/exclude
@@ -65,8 +66,7 @@ Bindings.prototype.add = function (new_binding) {
             && bindObj.include == new_binding.include
             && bindObj.exclude == new_binding.exclude) 
         {
-            if (confirm("There is an existing binding with the same shortcut"+
-            "and include/exclude patterns. Replace (OK) or add anyway (Cancel) ?")) {
+            if (confirm('There is an existing binding with the same shortcut and include/exclude patterns with xpath: "'+bindObj.xpath+'". Replace (OK) or add anyway (Cancel) ?')) {
                 delete this.bindings[id];
             }
         }
@@ -75,32 +75,75 @@ Bindings.prototype.add = function (new_binding) {
     this.save();
     this.make_cache();
 }
+Bindings.prototype.set = function (id, binding) {
+    this.bindings[parseInt(id)] = binding;
+    this.save();
+    this.make_cache();
+}
+Bindings.prototype.get = function (id) {
+    return this.bindings[parseInt(id)];
+}
+Bindings.prototype.remove = function (id) {
+    delete this.bindings[parseInt(id)];
+    this.save();
+    this.make_cache();
+}
 Bindings.prototype.log = function () {
     GM_log("ID Count:"+this.bindingsCount+"("+typeof this.bindingsCount+")");
     for (var id in this.bindings) {
         GM_log("Binding_"+id+": "+this.bindings[id]);
     }
+    for (var chr in this.cache) {
+    GM_log("Cache:  char:"+chr);
+        if (this.cache[chr]) for (var shift in this.cache[chr]) {
+    GM_log("Cache:      shift:"+shift);
+            if (this.cache[chr][shift]) 
+            for (var alt in this.cache[chr][shift]) {
+    GM_log("Cache:          alt:"+alt);
+                if (this.cache[chr][shift][alt]) 
+                for (var ctrl in this.cache[chr][shift][alt]) {
+    GM_log("Cache:              ctrl:"+ctrl);
+                    if (this.cache[chr][shift][alt][ctrl])
+                    for (var meta in this.cache[chr][shift][alt][ctrl]) {
+    GM_log("Cache:                  meta:"+meta);
+                        if (this.cache[chr][shift][alt][ctrl][meta])
+    GM_log("Cache:                      XPATH:"+this.cache[chr][shift][alt][ctrl][meta]);
+                    }
+                }
+            }
+        }
+    }
 }
 
 var binding_store = new Bindings();
-binding_store.log();
+//~ binding_store.log();
 
 var binddialog_opened = false;
+var managedialog_opened = false;
 
 HandlePageCombo();  // add listeners on the window and check 
                     // for keypresses matching the bindings
 
 
 function HandlePageCombo() {
-    var combo = {};
+    var combo = {}, 
+        bind_shortcut = deserialize("bindDialogShortcut"),
+        manage_shortcut = deserialize("manageDialogShortcut");
     function listener(event) {
         for (var key in KEYS) {
             combo[key] = event[key];
         }
-        if (keyHashEq(combo, deserialize("bindDialogShortcut"))) {
+        //~ GM_log(shortcutToString(combo) + " was pressed.");
+        if (keyHashEq(combo, bind_shortcut)) {
             event.preventDefault();
             event.stopPropagation();
             if (!binddialog_opened) BindDialog();
+            return;
+        }
+        if (keyHashEq(combo, manage_shortcut)) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!managedialog_opened) ManageDialog();
             return;
         }
         var xpath = binding_store.match(combo);
@@ -109,7 +152,7 @@ function HandlePageCombo() {
             try {
                 match = $x(xpath)
             } catch(exc) {
-                GM_log("Match expression << "+binding.xpath+" >> failed with: "+exc);
+                GM_log("Match expression << "+xpath+" >> failed with: "+exc);
                 return;
             }
             if (match.length > 1)
@@ -117,7 +160,8 @@ function HandlePageCombo() {
             if (match.length >= 1) {
                 var m = match[0];
                 if (m.click) {
-                    GM_log("Clicking: "+m.click());
+                    GM_log("Clicking.");
+                    m.click();
                 } else {
                     GM_log("Match didn't had a click method ! Creating event...");
                     //first focus it.
@@ -153,7 +197,7 @@ function HandlePageCombo() {
                     event.stopPropagation();
                 }   
             } else {
-                GM_log("Match expression << "+binding.xpath+" >> matched: "+match.length+" elements (should match only 1).");
+                GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
             }
         }
     }
@@ -161,10 +205,20 @@ function HandlePageCombo() {
 }
 
 function ManageDialog() {
-    var form, header, table, close_button;
-    function save() {}
+    managedialog_opened = true;
+    var form, header, table, close_button, dialog_selected, offsetx, offsety;
+    function cleanup() {
+        window.removeEventListener('keypress', remove, true);
+        document.removeEventListener("mousemove", handle_move, false);
+        document.body.removeChild(form);
+        serialize("manageDialog-posX", form.style.left);
+        serialize("manageDialog-posY", form.style.top);
+        managedialog_opened = false;
+    }
     document.body.appendChild(
-     form=EL('div', {id:"ShortcutBinderManageDialog"},
+     form=EL('div', { id:"ShortcutBinderManageDialog",
+                       style:'top:'+deserialize("manageDialog-posY", "'15px'")+
+                            ';left:'+deserialize("manageDialog-posX", "'15px'")},
       header=EL('h2', {}, 'Manage bindings'),
       table=EL('table', {}, 
        EL('tr', {}, 
@@ -175,27 +229,70 @@ function ManageDialog() {
         EL('th', {}, 'exclude')
        )
       ),
-      close_button=EL('input', {type: 'button', value:'Save', 'onclick':save})
+      close_button=EL('input', {type: 'button', value:'Close', 'onclick':cleanup})
      )
     )
     for (var id in binding_store.bindings) {
-        var binding = binding_store.bindings[id];
-        var bind_cell;
-        table.appendChild(EL('tr',{},
-            EL('td', {}, 
-                EL('input', {type:'button', value:'Delete'}),
-                EL('input', {type:'button', value:'Edit'})
-            ),
-            EL('td', {}, binding.xpath),
-            bind_cell=EL('td', {}, shortcutToString(binding.bind)),
-            EL('td', {}, binding.include),
-            EL('td', {}, binding.exclude)
-        ));                
+        (function (id) {
+            var binding = binding_store.bindings[id];
+            var bind_cell;
+            var row;
+            table.appendChild(row=EL('tr',{},
+                EL('td', {width:"60px"}, 
+                    EL('input', {type:'button', value:'Delete', onclick:function(){
+                        binding_store.remove(id);
+                        row.parentNode.removeChild(row);
+                    }}),
+                    EL('input', {type:'button', value:'Edit', onclick:function(){
+                        BindDialog(id);
+                    }})
+                ),
+                EL('td', {}, binding.xpath),
+                bind_cell=EL('td', {}, shortcutToString(binding.bind)),
+                EL('td', {}, binding.include),
+                EL('td', {}, binding.exclude)
+            ));                
+        })(id);
     }
+    
+    function handle_move(event) {
+        if (dialog_selected) {
+            form.style.left = (event.clientX-offsetx)+'px';
+            form.style.top = (event.clientY-offsety)+'px';
+        }
+    }
+    function remove(event) {
+        if (!binddialog_opened && event.charCode == 0 && event.keyCode == 27) {
+            event.preventDefault();
+            event.stopPropagation();
+            cleanup();
+        }
+    }    
+    
+    form.addEventListener('keypress', remove, true);
+    form.focus();
+    
+    window.addEventListener('keypress', remove, true);
+        
+    header.addEventListener('mousedown', function(event) {
+        dialog_selected = true;
+        offsetx = event.clientX-getElementPosition(event.target, true);
+        offsety = event.clientY-getElementPosition(event.target, false);
+        event.preventDefault();
+        event.stopPropagation();
+    }, true);
+    
+    header.addEventListener('mouseup', function(event) {
+        dialog_selected = false;
+        event.preventDefault();
+        event.stopPropagation();
+    }, true);
+    
+    document.addEventListener("mousemove", handle_move, false);
 }
-ManageDialog();
+//~ ManageDialog();
 
-function BindDialog() {
+function BindDialog(id) {
     binddialog_opened = true;
     var form, path_input, binding_input, include_input, exclude_input, 
         close_button, dialog_selected=false, outlined_element, header, 
@@ -215,12 +312,21 @@ function BindDialog() {
         binddialog_opened = false;
     }
     function save(event) {
-        binding_store.add({
-            xpath:path_input.value, 
-            bind:binding, 
-            include:include_input.value, 
-            exclude:exclude_input.value 
-        });
+        if (id) {
+            binding_store.set(id, {
+                xpath:path_input.value, 
+                bind:binding, 
+                include:include_input.value, 
+                exclude:exclude_input.value 
+            });
+        } else {    
+            binding_store.add({
+                xpath:path_input.value, 
+                bind:binding, 
+                include:include_input.value, 
+                exclude:exclude_input.value 
+            });
+        }
         cleanup();
     }
     function remove(event) {
@@ -296,7 +402,7 @@ function BindDialog() {
             path_input.style.background = 'lightgreen';
         }
         if (computed.length > 1) {
-            suggestions.textContent = "Bad, we've matched "+computed.length+" nodes !";
+            suggestions.textContent = "We've matched "+computed.length+" nodes ! Only the first element will be used.";
             for (var i=0; i<computed.length; i++) {
                 if (computeds[i].style) 
                     computed[i].style.MozOutline = '2px dashed red';
@@ -304,21 +410,34 @@ function BindDialog() {
             path_input.style.background = 'yellow';
         }
         if (computed.length == 0) {
-            suggestions.textContent = "Worse, we've matched 0 nodes !";
+            suggestions.textContent = "Sorry, we've matched 0 nodes ! You'll have to edit or rewrite the xpath expression yourself :(";
             path_input.style.background = 'red';
         }
     }
-    
+    var val_include, val_exclude, val_bind, val_xpath;
+    if (id) {
+        var obj = binding_store.get(id);
+        val_include = obj.include;
+        val_exclude = obj.exclude;
+        val_bind = shortcutToString(obj.bind);
+        binding = obj.bind;
+        val_xpath = obj.xpath;
+    } else {
+        val_include = /(.*?:[\/]{0,2}.*?\/).*/.exec(window.location)[1]+"*";
+        val_exclude = '';
+        val_bind = '';
+        val_xpath = '';
+    }        
     document.body.appendChild(
      form=EL('div', { id:"ShortcutBinderAddDialog", 
                       style:'top:'+deserialize("bindDialog-posY", "'50px'")+
                            ';left:'+deserialize("bindDialog-posX", "'50px'")},
       header=EL('h2', {}, 'Add new binding'),
-      EL('label', {}, "XPath to element:", path_input=EL('textarea', {wrap:'hard'})),  
+      EL('label', {}, "XPath to element:", path_input=EL('textarea', {wrap:'hard'}, val_xpath)),  
       suggestions=EL('div', {'class':'suggestions'}, ''),
-      EL('label', {}, "Shortcut:", binding_input=EL('input', {type: 'input'})),  
-      EL('label', {}, "Run on pages matching:", include_input=EL('input', {type: 'input', value:'*'})),  
-      EL('label', {}, "Exclude pages matching:", exclude_input=EL('input', {type: 'input', value:''})),  
+      EL('label', {}, "Shortcut:", binding_input=EL('input', {type: 'input',value:val_bind})),  
+      EL('label', {}, "Run on pages matching:", include_input=EL('input', {type: 'input', value:val_include})),  
+      EL('label', {}, "Exclude pages matching:", exclude_input=EL('input', {type: 'input', value:val_exclude})),  
       close_button=EL('input', {type: 'button', value:'Save', 'onclick':save})
      )
     )
@@ -368,17 +487,19 @@ function computePath(element) {
 }
 function computeXPath(element) {
     var path = computePath(element);
-    var xpath = '';
+    var xpath = [];
     for (var i=0; i<path.length; i++) {
         var tok = path[i];
         var expr = [];
         var p = tok.element.firstChild;
-        while (p && p.nodeType!=Node.ELEMENT_NODE)
+                    /*Node.ELEMENT_NODE*/
+        while (p && (p.nodeType != 1 || !p.textContent)) {
             p = p.nextSibling;
+        }
         if (tok.element.textContent && !p && i==0) {
             expr.push("(text()='"+element.textContent+"')");
         } 
-        if (tok.element.value) {
+        if (tok.element.nodeName=="INPUT" && tok.element.value) {
             expr.push("(@value='"+tok.element.value+"')");
         }
         if (tok.name) {
@@ -386,10 +507,21 @@ function computeXPath(element) {
                 expr.push("(@class='" + tok['class'] + "')");
             if (tok.id)
                 expr.push("(@id='" + tok.id + "')");
-            xpath = '/' + tok.name.toLowerCase() + (expr.length?('[' + expr.join(' and ') + ']'):'') + xpath;
+            xpath.push(expr.length?(tok.name.toLowerCase()+'['+expr.join(' and ')+']'):'');
         }
     }
-    return xpath;
+    xpath.push([]);
+    xpath = xpath.reduceRight(function(prev, curr, index, array){
+        if (!prev.length || prev[prev.length-1] || curr)
+            prev.push(curr);
+        return prev;
+    })
+    if (!xpath[0])
+        xpath.unshift('');
+    if (!xpath[xpath.length-1])
+        xpath.pop();
+    //~ GM_log(uneval(xpath));
+    return xpath.join('/');
 }
 
 function HandleKeypress(shortcut, shortcut_input, callback) {
@@ -408,16 +540,22 @@ function HandleKeypress(shortcut, shortcut_input, callback) {
     shortcut_input.addEventListener('keypress', listener, true);
     return listener;
 }
-
 function SetOptions() {
-    var close_button, form, shortcut_input, shortcut=deserialize("bindDialogShortcut");
+    var close_button, form, 
+        bind_shortcut_input, bind_shortcut=deserialize("bindDialogShortcut"),
+        manage_shortcut_input, manage_shortcut=deserialize("manageDialogShortcut");
     function save(event) {
-        serialize("bindDialogShortcut", shortcut);
+        serialize("bindDialogShortcut", bind_shortcut);
+        serialize("manageDialogShortcut", manage_shortcut);
         document.body.removeChild(form);
         window.removeEventListener('keypress', remove, true);
     }
-    function update() {
-        shortcut_input.value = shortcutToString(shortcut);
+    function update_bind() {
+        bind_shortcut_input.value = shortcutToString(bind_shortcut);
+        manage_shortcut_input.focus();
+    }
+    function update_manage() {
+        manage_shortcut_input.value = shortcutToString(manage_shortcut);
         close_button.focus();
     }
     function remove(event) {
@@ -431,17 +569,21 @@ function SetOptions() {
         
     document.body.appendChild(
      form=EL('div', {id: 'ShortcutBinderGlobalDialog'}, 
-      EL('h2', {}, "Shortcut for bind dialog"), EL('br'),
-      EL('label', {}, "Shortcut:", shortcut_input=EL('input', {
-          type: 'input', value:shortcutToString(shortcut)
-      })),
+      EL('h2', {}, "Shortcuts for add/manage dialogs"), EL('br'),
+      EL('label', {}, "Add shortcut:", bind_shortcut_input=EL('input', {
+          type: 'input', value:shortcutToString(bind_shortcut)
+      })), EL('br'),
+      EL('label', {}, "Manage shortcut:", manage_shortcut_input=EL('input', {
+          type: 'input', value:shortcutToString(manage_shortcut)
+      })), EL('br'),
       close_button=EL('input', {type: 'button', value:'Save', 'onclick':save})
      )
     );
-    HandleKeypress(shortcut, shortcut_input, update);
+    HandleKeypress(bind_shortcut, bind_shortcut_input, update_bind);
+    HandleKeypress(manage_shortcut, manage_shortcut_input, update_manage);
     form.addEventListener('keypress', remove, true);
     window.addEventListener('keypress', remove, true);
-    shortcut_input.focus();
+    bind_shortcut_input.focus();
 }
     
     
@@ -532,11 +674,21 @@ function keyHashEq(hash1, hash2) {
 }
 
 function deserialize(name, def) {
-  return eval(GM_getValue(name) || def || '({})');
+    var ret;
+    try {
+        ret = eval(GM_getValue(name) || def || '({})');
+        //~ GM_log("Deserializing '"+name+"' => '"+ret+"'");
+    } catch (exc) {
+        GM_log("Deserializing error for '"+name+"': '"+exc+"'");
+        return;
+    }
+    return ret;
 }
 
 function serialize(name, val) {
-  GM_setValue(name, uneval(val));
+    var saved = uneval(val);
+    //~ GM_log("Serializing '"+name+"'='"+val+"' => '"+saved+"'.");
+    GM_setValue(name, saved);
 }
 
 function $(id) {
@@ -688,18 +840,17 @@ GM_addStyle(
     "   color:black; background-color:white;"+
     "   position: fixed; top: 50px; left: 50%;"+
     "   border: 1px dashed black; margin: 0 0 0 -200px; padding: 5px;"+
-    "   width: 400px; height: 100px;"+
+    "   width: 400px; "+
     "   text-align: center;"+
     "}"+
 
     "#ShortcutBinderGlobalDialog input { "+
     "   margin: 2px 10px;"+
-    "   wxidth: 100%;"+
     "}"+
 
     "#ShortcutBinderAddDialog { "+
     "   color:black; background-color:white;"+
-    "   position: fixed;"+
+    "   position: fixed; z-index: 999999;"+
     "   border: 1px solid gray; margin: 0; padding: 5px;"+
     "   width: 400px;"+
     "   text-align: left;"+
@@ -716,26 +867,32 @@ GM_addStyle(
     "   display: block; margin: 5px;"+
     "}"+
     "#ShortcutBinderAddDialog input {"+
-    "   width: 100%;"+
+    "   width: 100%; margin: 0; border: "+
     "}"+
     "#ShortcutBinderAddDialog .suggestions { "+
     "   margin: 5px 5px 5px 15px;"+
     "}"+
     "#ShortcutBinderAddDialog textarea {"+
-    "   width: 100%;"+
+    "   width: 100%; margin: 0;"+
     "   height: 100px;"+
     "}"+
     
     "#ShortcutBinderManageDialog { "+
     "   color:black; background-color:white;"+
-    "   position: fixed;"+
+    "   position: fixed; z-index: 999998;"+
     "   border: 1px solid gray; margin: 0; padding: 5px;"+
     "   width: 80%;"+
     "   text-align: center;"+
     "}"+
     "#ShortcutBinderManageDialog table {"+
-    "   border: 1px;"+
-    "   width: 100%;"+
+    "   width: 100%; empty-cells: show;"+
+    "}"+
+    "#ShortcutBinderManageDialog td {"+
+    "   text-align: center;"+
+    "   border: 1px solid gray; -moz-border-radius: 3px"+
+    "}"+
+    "#ShortcutBinderManageDialog input {"+
+    "   width: 60px;"+
     "}"+
     
     ""

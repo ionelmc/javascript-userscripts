@@ -5,6 +5,8 @@
 
 Tool to bind certain shortcuts to clickable elements. You select an element (button, link etc), a key combination and url patterns to include/exclude . When you press that key combination this userscript will simulate a click on that element.
 
+*Note:* You need Greasemonkey: https://addons.mozilla.org/en-US/firefox/addon/748
+*Download:* http://webmonkey-userscripts.googlecode.com/svn/trunk/shortcut_binder/shortcutbinder.user.js
 
 = Details =
 

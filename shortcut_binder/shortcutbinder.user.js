@@ -34,12 +34,14 @@ Bindings.prototype.make_cache = function () {
             var shiftKeyObj = charCodeObj[bindHash.shiftKey] || {};
             var altKeyObj = shiftKeyObj[bindHash.altKey] || {};
             var ctrlKeyObj = altKeyObj[bindHash.ctrlKey] || {};
+            var xpathsObj = ctrlKeyObj[bindHash.metaKey] || [];
             
             this.cache[bindHash.charCode] = charCodeObj;
             charCodeObj[bindHash.shiftKey] = shiftKeyObj;
             shiftKeyObj[bindHash.altKey] = altKeyObj;
             altKeyObj[bindHash.ctrlKey] = ctrlKeyObj;
-            ctrlKeyObj[bindHash.metaKey] = bindObj.xpath;
+            ctrlKeyObj[bindHash.metaKey] = xpathsObj;
+            xpathsObj.push(bindObj.xpath);
         }
     }
 }
@@ -146,58 +148,61 @@ function HandlePageCombo() {
             if (!managedialog_opened) ManageDialog();
             return;
         }
-        var xpath = binding_store.match(combo);
-        if (xpath) {
-            var match;
-            try {
-                match = $x(xpath)
-            } catch(exc) {
-                GM_log("Match expression << "+xpath+" >> failed with: "+exc);
-                return;
-            }
-            if (match.length > 1)
-                GM_log("We've matched "+match.length+" elements. We'll use the first one.");
-            if (match.length >= 1) {
-                var m = match[0];
-                if (m.click) {
-                    GM_log("Clicking.");
-                    m.click();
-                } else {
-                    GM_log("Match didn't had a click method ! Creating event...");
-                    //first focus it.
-                    triggerEvent(m, 'focus');
-                    
-                    //try the click event
-                    var savedEvent = null;
-                    m.addEventListener('click', function(evt) {
-                        savedEvent = evt;
-                    }, false);
-                    
-                    
-                    var evt = document.createEvent('MouseEvents');
-                    evt.initMouseEvent(
-                        'click', true, true, document.defaultView, 1, 
-                        getElementPosition(m), getElementPosition(m, true), 
-                        getElementPosition(m), getElementPosition(m, true),
-                        false, false, false, false, 0, m
-                    );
-                    evt.initEvent('click', false, true);
-                    m.dispatchEvent(evt);
-                    
-                    if (savedEvent != null && !savedEvent.getPreventDefault()) {
-                        if (m.href) { 
-                            window.location.href = m.href;
-                        } else {
-                            GM_log("Matched element didn't have a href !");
-                        }
+        var xpaths = binding_store.match(combo);
+        if (xpaths && xpaths.length) {
+            for (var i=0; i<xpaths.length; i++) {
+                var xpath = xpaths[i];
+                var match;
+                try {
+                    match = $x(xpath)
+                } catch(exc) {
+                    GM_log("Match expression << "+xpath+" >> failed with: "+exc);
+                    return;
+                }
+                if (match.length > 1)
+                    GM_log("We've matched "+match.length+" elements. We'll use the first one.");
+                if (match.length >= 1) {
+                    var m = match[0];
+                    if (m.click) {
+                        GM_log("Clicking.");
+                        m.click();
                     } else {
-                        GM_log("Matched element canceled the click event.");
-                    }
-                    event.preventDefault();
-                    event.stopPropagation();
-                }   
-            } else {
-                GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
+                        GM_log("Match didn't had a click method ! Creating event...");
+                        //first focus it.
+                        triggerEvent(m, 'focus');
+                        
+                        //try the click event
+                        var savedEvent = null;
+                        m.addEventListener('click', function(evt) {
+                            savedEvent = evt;
+                        }, false);
+                        
+                        
+                        var evt = document.createEvent('MouseEvents');
+                        evt.initMouseEvent(
+                            'click', true, true, document.defaultView, 1, 
+                            getElementPosition(m), getElementPosition(m, true), 
+                            getElementPosition(m), getElementPosition(m, true),
+                            false, false, false, false, 0, m
+                        );
+                        evt.initEvent('click', false, true);
+                        m.dispatchEvent(evt);
+                        
+                        if (savedEvent != null && !savedEvent.getPreventDefault()) {
+                            if (m.href) { 
+                                window.location.href = m.href;
+                            } else {
+                                GM_log("Matched element didn't have a href !");
+                            }
+                        } else {
+                            GM_log("Matched element canceled the click event.");
+                        }
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }   
+                } else {
+                    GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
+                }
             }
         }
     }

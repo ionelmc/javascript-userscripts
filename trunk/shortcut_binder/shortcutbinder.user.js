@@ -18,9 +18,12 @@ GM_registerMenuCommand("Manage bindings", ManageDialog, "m");
 var KEYS = { altKey:'Alt', ctrlKey:'Ctrl', metaKey:'Meta', shiftKey:'Shift', charCode:'' };
 
 function Bindings() {
+    this.load();
+    this.make_cache();
+}
+Bindings.prototype.load = function() {
     this.bindingsCount = deserialize("bindingsCount", "(1)");
     this.bindings = deserialize("bindings", "({})");
-    this.make_cache();
 }
 Bindings.prototype.make_cache = function () {
     this.cache = {};
@@ -60,6 +63,7 @@ Bindings.prototype.save = function () {
     serialize("bindingsCount", this.bindingsCount);
 }
 Bindings.prototype.add = function (new_binding) {
+    this.load();
     var confirmed = false;
     for (var id in this.bindings) {
         var bindObj = this.bindings[id];
@@ -78,6 +82,7 @@ Bindings.prototype.add = function (new_binding) {
     this.make_cache();
 }
 Bindings.prototype.set = function (id, binding) {
+    this.load();
     this.bindings[parseInt(id)] = binding;
     this.save();
     this.make_cache();
@@ -86,6 +91,7 @@ Bindings.prototype.get = function (id) {
     return this.bindings[parseInt(id)];
 }
 Bindings.prototype.remove = function (id) {
+    this.load();
     delete this.bindings[parseInt(id)];
     this.save();
     this.make_cache();

@@ -7,8 +7,8 @@
 // @id              $Id$
 // @date            $Date$
 // @source          $URL$
-// @author          $Author$
-// @version         1.0
+// @author          Maries Ionel Cristian
+// @version         1.1
 // ==/UserScript==
 
 GM_registerMenuCommand("Set shortcut for bind dialog", SetOptions, "k");

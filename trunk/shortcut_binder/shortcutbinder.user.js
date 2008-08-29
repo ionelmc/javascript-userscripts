@@ -11,6 +11,11 @@
 // @version         1.1
 // ==/UserScript==
 
+//TODO
+//- fix shortcut mashing (keeping the shortcut pressed floods the browser 
+//  with key/location change events, add some timeouts
+//- fix previous shortcut eating the keypress event from the add shortcut dialog
+
 GM_registerMenuCommand("Set shortcut for bind dialog", SetOptions, "k");
 GM_registerMenuCommand("Add manual bind", BindDialog, "b");
 GM_registerMenuCommand("Manage bindings", ManageDialog, "m");

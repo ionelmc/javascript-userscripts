@@ -8,7 +8,7 @@
 // @date            $Date$
 // @source          $URL$
 // @author          Maries Ionel Cristian
-// @version         1.2
+// @version         1.2.1
 // ==/UserScript==
 
 //TODO

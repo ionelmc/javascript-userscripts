@@ -143,6 +143,17 @@ function HandlePageCombo() {
         bind_shortcut = deserialize("bindDialogShortcut"),
         manage_shortcut = deserialize("manageDialogShortcut");
     function listener(event) {
+        if (event && event.target && event.target.nodeName && (
+            (event.target.nodeName == 'INPUT' && 
+                (event.target.type == 'password' || event.target.type == 'text')
+            ) 
+            || 
+            event.target.nodeName == 'TEXTAREA'
+        )) {
+            //~ GM_log('input or textarea has focus. will not trigger bindings.');
+            return;
+        };
+        
         for (var key in KEYS) {
             combo[key] = event[key];
         }
@@ -167,20 +178,25 @@ function HandlePageCombo() {
                 try {
                     match = $x(xpath)
                 } catch(exc) {
-                    GM_log("Match expression << "+xpath+" >> failed with: "+exc);
+                    //~ GM_log("Match expression << "+xpath+" >> failed with: "+exc);
                     return;
                 }
                 if (match.length > 1)
-                    GM_log("We've matched "+match.length+" elements. We'll use the first one.");
+                    //~ GM_log("We've matched "+match.length+" elements. We'll use the first one.");
                 if (match.length >= 1) {
                     var m = match[0];
+                    
+                    if (m.focus) {
+                        //~ GM_log("Focusing.");
+                        m.focus();
+                    } else {
+                        triggerEvent(m, 'focus');
+                    }
                     if (m.click) {
-                        GM_log("Clicking.");
+                        //~ GM_log("Clicking.");
                         m.click();
                     } else {
-                        GM_log("Match didn't had a click method ! Creating event...");
-                        //first focus it.
-                        triggerEvent(m, 'focus');
+                        //~ GM_log("Match didn't had a click method ! Creating event...");
                         
                         //try the click event
                         var savedEvent = null;
@@ -203,16 +219,16 @@ function HandlePageCombo() {
                             if (m.href) { 
                                 window.location.href = m.href;
                             } else {
-                                GM_log("Matched element didn't have a href !");
+                                //~ GM_log("Matched element didn't have a href !");
                             }
                         } else {
-                            GM_log("Matched element canceled the click event.");
+                            //~ GM_log("Matched element canceled the click event.");
                         }
-                        event.preventDefault();
-                        event.stopPropagation();
                     }   
+                    event.preventDefault();
+                    event.stopPropagation();
                 } else {
-                    GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
+                    //~ GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
                 }
             }
         }
@@ -621,7 +637,7 @@ function triggerEvent(element, eventType, canBubble, controlKeyDown, altKeyDown,
     } catch (e) {
         // On Firefox 1.0, you can only set these during initMouseEvent or initKeyEvent
         // we'll have to ignore them here
-        LOG.exception(e);
+        GM_log(e);
     }
     
     evt.initEvent(eventType, canBubble, true);
@@ -695,7 +711,7 @@ function deserialize(name, def) {
         ret = eval(GM_getValue(name) || def || '({})');
         //~ GM_log("Deserializing '"+name+"' => '"+ret+"'");
     } catch (exc) {
-        GM_log("Deserializing error for '"+name+"': '"+exc+"'");
+        //~ GM_log("Deserializing error for '"+name+"': '"+exc+"'");
         return;
     }
     return ret;

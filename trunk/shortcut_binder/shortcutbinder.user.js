@@ -143,7 +143,12 @@ function HandlePageCombo() {
         bind_shortcut = deserialize("bindDialogShortcut"),
         manage_shortcut = deserialize("manageDialogShortcut");
     function listener(event) {
-        if (event && event.target && event.target.nodeName && (
+        for (var key in KEYS) {
+            combo[key] = event[key];
+        }
+        
+        if (!(combo.altKey || combo.ctrlKey || combo.metaKey || combo.shiftKey) &&
+            event && event.target && event.target.nodeName && (
             (event.target.nodeName == 'INPUT' && 
                 (event.target.type == 'password' || event.target.type == 'text')
             ) 
@@ -154,9 +159,7 @@ function HandlePageCombo() {
             return;
         };
         
-        for (var key in KEYS) {
-            combo[key] = event[key];
-        }
+        
         //~ GM_log(shortcutToString(combo) + " was pressed.");
         if (keyHashEq(combo, bind_shortcut)) {
             event.preventDefault();

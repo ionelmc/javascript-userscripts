@@ -8,7 +8,7 @@
 // @date            $Date$
 // @source          $URL$
 // @author          Maries Ionel Cristian
-// @version         1.2.1
+// @version         1.2.2
 // ==/UserScript==
 
 //TODO
@@ -21,6 +21,7 @@ GM_registerMenuCommand("Add manual bind", BindDialog, "b");
 GM_registerMenuCommand("Manage bindings", ManageDialog, "m");
     
 var KEYS = { altKey:'Alt', ctrlKey:'Ctrl', metaKey:'Meta', shiftKey:'Shift', charCode:'' };
+var DEBUG = deserialize("debug_log", "(false)");;
 
 function Bindings() {
     this.load();
@@ -129,7 +130,7 @@ Bindings.prototype.log = function () {
 }
 
 var binding_store = new Bindings();
-//~ binding_store.log();
+if (DEBUG) binding_store.log();
 
 var binddialog_opened = false;
 var managedialog_opened = false;
@@ -155,12 +156,12 @@ function HandlePageCombo() {
             || 
             event.target.nodeName == 'TEXTAREA'
         )) {
-            //~ GM_log('input or textarea has focus. will not trigger bindings.');
+            if (DEBUG) GM_log('input or textarea has focus. will not trigger bindings.');
             return;
         };
         
         
-        //~ GM_log(shortcutToString(combo) + " was pressed.");
+        if (DEBUG) GM_log(shortcutToString(combo) + " was pressed.");
         if (keyHashEq(combo, bind_shortcut)) {
             event.preventDefault();
             event.stopPropagation();
@@ -178,28 +179,31 @@ function HandlePageCombo() {
             for (var i=0; i<xpaths.length; i++) {
                 var xpath = xpaths[i];
                 var match;
+                if (DEBUG) GM_log('Trying << '+ xpath + ' >>');
+                    
                 try {
                     match = $x(xpath)
                 } catch(exc) {
-                    //~ GM_log("Match expression << "+xpath+" >> failed with: "+exc);
+                    if (DEBUG) GM_log("Match expression << "+xpath+" >> failed with: "+exc);
                     return;
                 }
+                if (DEBUG) GM_log("Matched "+match.length+" elements.");
                 if (match.length > 1)
-                    //~ GM_log("We've matched "+match.length+" elements. We'll use the first one.");
+                    if (DEBUG) GM_log("We've matched "+match.length+" elements. We'll use the first one.");
                 if (match.length >= 1) {
                     var m = match[0];
                     
                     if (m.focus) {
-                        //~ GM_log("Focusing.");
+                        if (DEBUG) GM_log("Focusing.");
                         m.focus();
                     } else {
                         triggerEvent(m, 'focus');
                     }
                     if (m.click) {
-                        //~ GM_log("Clicking.");
+                        if (DEBUG) GM_log("Clicking.");
                         m.click();
                     } else {
-                        //~ GM_log("Match didn't had a click method ! Creating event...");
+                        if (DEBUG) GM_log("Match didn't had a click method ! Creating event...");
                         
                         //try the click event
                         var savedEvent = null;
@@ -219,19 +223,25 @@ function HandlePageCombo() {
                         m.dispatchEvent(evt);
                         
                         if (savedEvent != null && !savedEvent.getPreventDefault()) {
+                            unsafeWindow.console.log(m);
+                            while (!m.href && m.parentNode) {
+                                m = m.parentNode;
+                                unsafeWindow.console.log(m);
+                            
+                            }
                             if (m.href) { 
                                 window.location.href = m.href;
-                            } else {
-                                //~ GM_log("Matched element didn't have a href !");
+                            } else {                                
+                                if (DEBUG) GM_log("Matched element didn't have a href !");
                             }
                         } else {
-                            //~ GM_log("Matched element canceled the click event.");
+                            if (DEBUG) GM_log("Matched element canceled the click event.");
                         }
                     }   
                     event.preventDefault();
                     event.stopPropagation();
                 } else {
-                    //~ GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
+                    if (DEBUG) GM_log("Match expression << "+xpath+" >> matched: "+match.length+" elements (should match only 1).");
                 }
             }
         }
@@ -373,7 +383,7 @@ function BindDialog(id) {
     }
     
     function element_mouseOver(event) {
-        //~ GM_log('mouseOver'+ event.target.innerHTML);
+        if (DEBUG) GM_log('mouseOver'+ event.target.innerHTML);
     }
     function element_mouseMove(event) {
         if (dialog_selected) {
@@ -398,7 +408,7 @@ function BindDialog(id) {
         }
         event.preventDefault();
         event.stopPropagation();
-        //~ GM_log('mouseMove', event.target.innerHTML);
+        if (DEBUG) GM_log('mouseMove', event.target.innerHTML);
     }   
     function element_click(event) {
         var element = event.target;
@@ -410,7 +420,7 @@ function BindDialog(id) {
             event.preventDefault();
             event.stopPropagation();
         }
-        //~ GM_log('elementClick', event.target.innerHTML);
+        if (DEBUG) GM_log('elementClick', event.target.innerHTML);
     }
     function path_changed(event, value) {
         for (var i=0; i<computeds.length; i++) {
@@ -419,7 +429,7 @@ function BindDialog(id) {
         }
         var computed;
         try { 
-            //~ GM_log(value||path_input.value);
+            if (DEBUG) GM_log(value||path_input.value);
             computed = $x(value||path_input.value).filter(function(el) {
                 return el!=form && !isAncestor(el, form);
             });
@@ -555,14 +565,14 @@ function computeXPath(element) {
         xpath.unshift('');
     if (!xpath[xpath.length-1])
         xpath.pop();
-    //~ GM_log(uneval(xpath));
+    if (DEBUG) GM_log(uneval(xpath));
     return xpath.join('/');
 }
 
 function HandleKeypress(shortcut, shortcut_input, callback) {
     function listener(event) {
         if (!event.charCode) return;
-        //~ GM_log(shortcut+':'+typeof shortcut);
+        if (DEBUG) GM_log(shortcut+':'+typeof shortcut);
         var out = []
         for (var key in KEYS) {
             shortcut[key] = event[key];
@@ -712,9 +722,9 @@ function deserialize(name, def) {
     var ret;
     try {
         ret = eval(GM_getValue(name) || def || '({})');
-        //~ GM_log("Deserializing '"+name+"' => '"+ret+"'");
+        if (DEBUG) GM_log("Deserializing '"+name+"' => '"+ret+"'");
     } catch (exc) {
-        //~ GM_log("Deserializing error for '"+name+"': '"+exc+"'");
+        if (DEBUG) GM_log("Deserializing error for '"+name+"': '"+exc+"'");
         return;
     }
     return ret;
@@ -722,7 +732,7 @@ function deserialize(name, def) {
 
 function serialize(name, val) {
     var saved = uneval(val);
-    //~ GM_log("Serializing '"+name+"'='"+val+"' => '"+saved+"'.");
+    if (DEBUG) GM_log("Serializing '"+name+"'='"+val+"' => '"+saved+"'.");
     GM_setValue(name, saved);
 }
 

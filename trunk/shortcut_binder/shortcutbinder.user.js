@@ -223,11 +223,8 @@ function HandlePageCombo() {
                         m.dispatchEvent(evt);
                         
                         if (savedEvent != null && !savedEvent.getPreventDefault()) {
-                            unsafeWindow.console.log(m);
                             while (!m.href && m.parentNode) {
                                 m = m.parentNode;
-                                unsafeWindow.console.log(m);
-                            
                             }
                             if (m.href) { 
                                 window.location.href = m.href;

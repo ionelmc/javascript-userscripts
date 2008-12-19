@@ -4,7 +4,7 @@
 // @include        http://forums.dpreview.com/forums/read.asp*
 // ==/UserScript==
 
-var match = (/http:\/\/forums.dpreview.com\/forums\/read.asp?(.*)/).exec(window.location.href);
+var match = (/http:\/\/forums.dpreview.com\/forums\/read.asp\?(.*)/).exec(window.location.href);
 if (match[1]) {
     window.location = "http://forums.dpreview.com/forums/readflat.asp?"+match[1]+"&changemode=1";
 }

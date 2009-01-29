@@ -6,23 +6,44 @@
 // ==/UserScript==
 
 var links = $x("//h3//a[@onmousedown]");
+
+
 for (var i=0; i<links.length; i++) {
   var a = links[i];
-  a.addEventListener('click', i_know_how_to_handle, true);
-  a.setAttribute('crap_handler', a.getAttribute('onmousedown'));
-  a.setAttribute('onmousedown', "");
-  
+  a.addEventListener('mousedown', i_know_how_to_handle, true);
+  var onmdown = a.getAttribute('onmousedown');
+  if (onmdown && onmdown.length) {
+    a.setAttribute('craphandler', onmdown);
+    a.setAttribute('properhref', a.getAttribute('href'));
+    a.setAttribute('onmousedown', "");
+  }
 }
+
 delete links;
 
 var rwt = unsafeWindow.rwt; // 
+/* eg: window.rwt=function(b,d,e,g,h,f,i){
+    var a=encodeURIComponent||escape,
+        c=b.href.split("#");
+    b.href="/url?sa=t\x26source\x3dweb"+(d?"&oi="+a(d):"")+(e?"&cad="+a(e):"")+"&ct="+a(g)+"&cd="+a(h)+"&url="+a(c[0]).replace(/\+/g,"%2B")+"&ei=NGWBSeTUKY_Q0QWy74FT"+(f?"&usg="+f:"")+i+(c[1]?"#"+c[1]:"");
+    b.onmousedown="";
+    return true
+};
+*/
 
 function i_know_how_to_handle(event) {
-  event.preventDefault();
-  var el = event.target;
+  var el = event.currentTarget;
+  unsafeWindow.console.log(event.wrappedJSObject);
   var fake_el = {href:el.getAttribute('href')};
-  var handler = new Function(el.getAttribute('crap_handler'));
-  document.location = fake_el.href;
+  var handler = new Function(el.getAttribute('craphandler'));
+  handler.apply(fake_el);
+  if (event.button==2) {
+    el.setAttribute('href', el.getAttribute('properhref'));
+  } else {
+    el.setAttribute('href', fake_el.href);
+  }
+
+  //~ document.location = fake_el.href;
 }
 
 ////////// utils

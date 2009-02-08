@@ -52,4 +52,5 @@ http://webmonkey-userscripts.googlecode.com/svn/trunk/www/1-21.png
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/5.png
 
 ---
+
 Please - for any problems, use the issue tracker: http://code.google.com/p/webmonkey-userscripts/issues/list

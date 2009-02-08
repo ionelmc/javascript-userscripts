@@ -51,6 +51,10 @@ http://webmonkey-userscripts.googlecode.com/svn/trunk/www/1-21.png
 === Shortcut works. The page was opened. ===
 http://webmonkey-userscripts.googlecode.com/svn/trunk/www/5.png
 
+
+
 ---
+
+
 
 Please - for any problems, use the issue tracker: http://code.google.com/p/webmonkey-userscripts/issues/list

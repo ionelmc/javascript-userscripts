@@ -8,7 +8,7 @@
 // @date            $Date$
 // @source          $URL$
 // @author          Maries Ionel Cristian
-// @version         1.2.2
+// @version         1.2.3
 // ==/UserScript==
 
 //TODO
@@ -884,6 +884,7 @@ GM_addStyle(
     "   border: 1px dashed black; margin: 0 0 0 -200px; padding: 5px;"+
     "   width: 400px; "+
     "   text-align: center;"+
+    "   z-index: 99999999;"+
     "}"+
 
     "#ShortcutBinderGlobalDialog input { "+
@@ -892,7 +893,7 @@ GM_addStyle(
 
     "#ShortcutBinderAddDialog { "+
     "   color:black; background-color:white;"+
-    "   position: fixed; z-index: 999999;"+
+    "   position: fixed; z-index: 99999999;"+
     "   border: 1px solid gray; margin: 0; padding: 5px;"+
     "   width: 400px;"+
     "   text-align: left;"+
@@ -921,7 +922,7 @@ GM_addStyle(
     
     "#ShortcutBinderManageDialog { "+
     "   color:black; background-color:white;"+
-    "   position: absolute; z-index: 999998;"+
+    "   position: absolute; z-index: 99999998;"+
     "   border: 1px solid gray; margin: 0; padding: 5px;"+
     "   width: 80%;"+
     "   text-align: center;"+

@@ -893,7 +893,7 @@ GM_addStyle(
 
     "#ShortcutBinderAddDialog { "+
     "   color:black; background-color:white;"+
-    "   position: fixed; z-index: 99999999;"+
+    "   position: fixed; z-index: 99999998;"+
     "   border: 1px solid gray; margin: 0; padding: 5px;"+
     "   width: 400px;"+
     "   text-align: left;"+
@@ -922,7 +922,7 @@ GM_addStyle(
     
     "#ShortcutBinderManageDialog { "+
     "   color:black; background-color:white;"+
-    "   position: absolute; z-index: 99999998;"+
+    "   position: absolute; z-index: 99999997;"+
     "   border: 1px solid gray; margin: 0; padding: 5px;"+
     "   width: 80%;"+
     "   text-align: center;"+

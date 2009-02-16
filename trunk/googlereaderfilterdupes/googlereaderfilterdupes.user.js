@@ -1,12 +1,21 @@
 // ==UserScript==
-// @name           GoogleReaderFilterDupes
+// @name           Google Reader Filter Duplicates
 // @namespace      webmonkey
-// @description    Filter dupes from a folder in Google Reader
+// @description    Filter dupes from a folder in Google Reader by title and link href
 // @include        http://reader.google.com/reader/*
 // @include        https://reader.google.com/reader/*
 // @include        http://www.google.com/reader/*
 // @include        https://www.google.com/reader/*
+
+// @revision        $Revision: $
+// @id              $Id: $
+// @date            $Date: $
+// @source          $URL: $
+// @author          Maries Ionel Cristian
+// @version         0.1
+
 // ==/UserScript==  
+
 var E = [], T = [];
 var ematch = /entry(?!-\S)/;
 function main_init() {

@@ -7,10 +7,10 @@
 // @include        http://www.google.com/reader/*
 // @include        https://www.google.com/reader/*
 
-// @revision        $Revision: $
-// @id              $Id: $
-// @date            $Date: $
-// @source          $URL: $
+// @revision        $Revision$
+// @id              $Id$
+// @date            $Date$
+// @source          $URL$
 // @author          Maries Ionel Cristian
 // @version         0.1
 

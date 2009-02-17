@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Google Reader Filter Duplicates
 // @namespace      webmonkey
-// @description    Filter dupes from a folder in Google Reader by title and link href
+// @description    Filter dupes from a folder in Google Reader (removes items with the same title and or link href)
 // @include        http://reader.google.com/reader/*
 // @include        https://reader.google.com/reader/*
 // @include        http://www.google.com/reader/*

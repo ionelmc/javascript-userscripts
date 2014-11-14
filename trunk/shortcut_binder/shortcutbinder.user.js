@@ -9,6 +9,11 @@
 // @source          $URL$
 // @author          Maries Ionel Cristian
 // @version         1.2.3
+// @grant           GM_registerMenuCommand
+// @grant           GM_log
+// @grant           GM_getValue
+// @grant           GM_setValue
+// @grant           GM_addStyle
 // ==/UserScript==
 
 //TODO
@@ -94,6 +99,7 @@ Bindings.prototype.set = function (id, binding) {
     this.make_cache();
 }
 Bindings.prototype.get = function (id) {
+    GM_log("get id"+id)
     return this.bindings[parseInt(id)];
 }
 Bindings.prototype.remove = function (id) {
@@ -286,7 +292,7 @@ function ManageDialog() {
                         row.parentNode.removeChild(row);
                     }}),
                     EL('input', {type:'button', value:'Edit', onclick:function(){
-                        BindDialog(id);
+                        BindDialog(null, id);
                     }})
                 ),
                 EL('td', {}, binding.xpath),
@@ -334,7 +340,7 @@ function ManageDialog() {
 }
 //~ ManageDialog();
 
-function BindDialog(id) {
+function BindDialog(whatev, id) {
     binddialog_opened = true;
     var form, path_input, binding_input, include_input, exclude_input, 
         close_button, dialog_selected=false, outlined_element, header, 

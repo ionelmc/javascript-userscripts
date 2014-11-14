@@ -8,7 +8,7 @@
 // @date            $Date$
 // @source          $URL$
 // @author          Maries Ionel Cristian
-// @version         1.2.3
+// @version         1.2.4
 // @grant           GM_registerMenuCommand
 // @grant           GM_log
 // @grant           GM_getValue
